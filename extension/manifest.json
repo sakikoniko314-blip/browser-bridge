@@ -3,7 +3,7 @@
   "name": "Browser Bridge",
   "version": "1.0.0",
   "description": "WebSocket bridge for AI assistant browser control",
-  "permissions": ["tabs", "scripting", "cookies", "storage", "activeTab", "nativeMessaging", "alarms"],
+  "permissions": ["tabs", "scripting", "cookies", "storage", "activeTab", "nativeMessaging", "alarms", "debugger"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"

@@ -219,37 +219,86 @@ async function executeTool(tool, args) {
     }
 
     case 'browser_click': {
-      return await executeInPage((sel) => {
-        const el = document.querySelector(sel);
-        if (!el) return 'NOT_FOUND';
-        if (el instanceof HTMLElement) el.focus();
-        el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-        return document.documentElement.outerHTML;
+      var tab = await getActiveTab();
+      var rect = await executeInPage(function(sel) {
+        var el = document.querySelector(sel);
+        if (!el) return null;
+        var r = el.getBoundingClientRect();
+        return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2), w: r.width, h: r.height, text: el.textContent?.trim()?.substring(0, 50) };
       }, [args.selector]);
+      if (!rect) return 'NOT_FOUND';
+      try {
+        await new Promise(function(resolve, reject) {
+          chrome.debugger.attach({ tabId: tab.id }, '1.3', function() {
+            if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
+            chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchMouseEvent', { type: 'mousePressed', x: rect.x, y: rect.y, modifiers: 0, button: 'left', clickCount: 1, buttons: 1 }, function() {
+              chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchMouseEvent', { type: 'mouseReleased', x: rect.x, y: rect.y, modifiers: 0, button: 'left', clickCount: 1, buttons: 1 }, function() {
+                chrome.debugger.detach({ tabId: tab.id }, resolve);
+              });
+            });
+          });
+        });
+      } catch(e) {
+        return await executeInPage(function(sel) {
+          var el = document.querySelector(sel);
+          if (!el) return 'NOT_FOUND';
+          if (el instanceof HTMLElement) el.focus();
+          el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+          return document.documentElement.outerHTML;
+        }, [args.selector]);
+      }
+      return await executeInPage(function() { return document.documentElement.outerHTML; });
     }
 
     case 'browser_type_text': {
-      return await executeInPage((sel, text) => {
-        const el = document.querySelector(sel);
-        if (!el) return 'NOT_FOUND';
+      var tab = await getActiveTab();
+      var elInfo = await executeInPage(function(sel) {
+        var el = document.querySelector(sel);
+        if (!el) return null;
         el.focus();
-        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-          el.value = text;
-        } else {
+        return { tag: el.tagName, isInput: el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement, type: el.type || '' };
+      }, [args.selector]);
+      if (!elInfo) return 'NOT_FOUND';
+      if (elInfo.isInput) {
+        try {
+          await new Promise(function(resolve, reject) {
+            chrome.debugger.attach({ tabId: tab.id }, '1.3', function() {
+              if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
+              chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.insertText', { text: args.text }, function() {
+                chrome.debugger.detach({ tabId: tab.id }, resolve);
+              });
+            });
+          });
+          return await executeInPage(function() { return document.documentElement.outerHTML; });
+        } catch(e) {
+          return await executeInPage(function(sel, text) {
+            var el = document.querySelector(sel);
+            if (!el) return 'NOT_FOUND';
+            el.focus();
+            var nativeSetter = Object.getOwnPropertyDescriptor(el instanceof HTMLInputElement ? HTMLInputElement.prototype : HTMLTextAreaElement.prototype, 'value').set;
+            nativeSetter.call(el, text);
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+            el.dispatchEvent(new InputEvent('beforeinput', { bubbles: true, inputType: 'insertText', data: text }));
+            return document.documentElement.outerHTML;
+          }, [args.selector, args.text]);
+        }
+      } else {
+        return await executeInPage(function(sel, text) {
+          var el = document.querySelector(sel);
+          if (!el) return 'NOT_FOUND';
+          el.focus();
           el.textContent = '';
           el.focus();
-          const sel = window.getSelection();
-          if (sel) {
-            sel.selectAllChildren(el);
-            sel.collapseToEnd();
-          }
+          var sel2 = window.getSelection();
+          if (sel2) { sel2.selectAllChildren(el); sel2.collapseToEnd(); }
           document.execCommand('insertText', false, text);
-        }
-        el.dispatchEvent(new Event('input', { bubbles: true }));
-        el.dispatchEvent(new Event('change', { bubbles: true }));
-        el.dispatchEvent(new InputEvent('beforeinput', { bubbles: true, inputType: 'insertText', data: text }));
-        return document.documentElement.outerHTML;
-      }, [args.selector, args.text]);
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+          el.dispatchEvent(new InputEvent('beforeinput', { bubbles: true, inputType: 'insertText', data: text }));
+          return document.documentElement.outerHTML;
+        }, [args.selector, args.text]);
+      }
     }
 
     case 'browser_scroll': {

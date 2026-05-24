@@ -239,7 +239,7 @@ async function executeTool(tool, args) {
               chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchMouseEvent', { type: 'mousePressed', x: info.ix, y: info.iy, modifiers: 0, button: 'left', clickCount: 1 }, function() {
                 chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchMouseEvent', { type: 'mouseReleased', x: info.ix, y: info.iy, modifiers: 0, button: 'left', clickCount: 1 }, function() {
                   chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchKeyEvent', { type: 'rawKeyDown', modifiers: 0, windowsVirtualKeyCode: 13, key: 'Enter', code: 'Enter' }, function() {
-                    chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchKeyEvent', { type: 'keyUp', modifiers: 0, windowsVirtualKeyCode: 13, key: 'Enter', code: 'Enter' }, function() {
+                    chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchKeyEvent', { type: 'char', modifiers: 0, windowsVirtualKeyCode: 13, key: 'Enter', text: '\r', unmodifiedText: '\r' }, function() {
                       chrome.debugger.detach({ tabId: tab.id }, resolve);
                     });
                   });

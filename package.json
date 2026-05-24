@@ -1,0 +1,33 @@
+{
+  "name": "browser-bridge",
+  "version": "1.0.0",
+  "description": "Chrome MCP Server — AI controls your real browser with full HTML/CSS/JS access",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "browser-bridge": "./setup.mjs"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "setup": "node setup.mjs"
+  },
+  "files": [
+    "dist/",
+    "extension/",
+    "native-host/",
+    "bridge.mjs",
+    "setup.mjs"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/ws": "^8.5.0",
+    "typescript": "^5.7.0"
+  },
+  "keywords": ["mcp", "chrome-extension", "browser-automation", "opencode", "claude"],
+  "license": "MIT"
+}

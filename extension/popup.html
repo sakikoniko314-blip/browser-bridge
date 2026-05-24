@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 280px;
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 12px;
+      background: #1a1a2e;
+      color: #e0e0e0;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .header h1 { font-size: 14px; font-weight: 600; }
+    #statusDot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #9E9E9E;
+      flex-shrink: 0;
+    }
+    #statusDot.connected { background: #4CAF50; }
+    #statusDot.disconnected { background: #9E9E9E; }
+    #statusDot.error { background: #F44336; }
+    .label { font-size: 11px; color: #888; margin-bottom: 4px; }
+    .row { margin-bottom: 10px; }
+    input, button { width: 100%; font-size: 13px; }
+    input {
+      padding: 6px 8px;
+      border: 1px solid #333;
+      border-radius: 4px;
+      background: #16213e;
+      color: #e0e0e0;
+      outline: none;
+    }
+    input:focus { border-color: #4CAF50; }
+    button {
+      padding: 8px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    #connectBtn {
+      background: #4CAF50;
+      color: #fff;
+    }
+    #connectBtn:hover { background: #43A047; }
+    #disconnectBtn {
+      background: #F44336;
+      color: #fff;
+    }
+    #disconnectBtn:hover { background: #E53935; }
+    .btn-group { display: flex; gap: 8px; }
+    .btn-group button { flex: 1; }
+    #statusText { font-size: 12px; color: #888; text-align: center; margin-top: 8px; }
+    #extensionId { font-size: 10px; color: #555; text-align: center; margin-top: 6px; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div id="statusDot" class="disconnected"></div>
+    <h1>Browser Bridge</h1>
+  </div>
+  <div class="row">
+    <div class="label">Server URL</div>
+    <input type="text" id="wsUrl" value="ws://127.0.0.1:12800" />
+  </div>
+  <div class="btn-group">
+    <button id="connectBtn">Connect</button>
+    <button id="disconnectBtn">Disconnect</button>
+  </div>
+  <div id="statusText">Disconnected</div>
+  <div id="extensionId"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

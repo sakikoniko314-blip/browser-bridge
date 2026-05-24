@@ -243,9 +243,6 @@ async function executeTool(tool, args) {
                   });
                 });
               });
-                  });
-                });
-              });
             } else {
               chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchMouseEvent', { type: 'mousePressed', x: info.x, y: info.y, modifiers: 0, button: 'left', clickCount: 1 }, function() {
                 chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchMouseEvent', { type: 'mouseReleased', x: info.x, y: info.y, modifiers: 0, button: 'left', clickCount: 1 }, function() {

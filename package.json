@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "browser-bridge": "./cli.mjs"
+    "browser-bridge": "./browser-bridge.cmd"
   },
   "scripts": {
     "build": "tsc",
@@ -17,7 +17,9 @@
     "extension/",
     "native-host/",
     "bridge.mjs",
-    "setup.mjs"
+    "cli.mjs",
+    "setup.mjs",
+    "browser-bridge.cmd"
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",

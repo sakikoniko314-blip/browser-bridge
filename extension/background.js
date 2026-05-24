@@ -205,13 +205,15 @@ async function executeTool(tool, args) {
     case 'browser_execute_js': {
       return await executeInPage((code) => {
         var id = '_bc_' + Math.random().toString(36).slice(2);
-        window[id] = undefined;
+        var sentinel = {};
+        window[id] = sentinel;
         var s = document.createElement('script');
-        s.textContent = 'window["' + id + '"]=(function(){try{return eval(' + JSON.stringify(code) + ')}catch(e){return{error:e.message}}})()';
+        s.textContent = 'window["' + id + '"]=JSON.stringify((function(){try{return eval(' + JSON.stringify(code) + ')}catch(e){return{error:e.message}}})())';
         (document.head || document.documentElement).appendChild(s);
         s.remove();
         var r = window[id];
         delete window[id];
+        if (r === sentinel) return '__CSP_BLOCKED__';
         return r;
       }, [args.code]);
     }

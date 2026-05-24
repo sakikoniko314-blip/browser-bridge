@@ -10,6 +10,7 @@ export class WsBridge {
   private wss: WebSocketServer | null = null;
   private client: WebSocket | null = null;
   private pending = new Map<string, PendingRequest>();
+  private keepaliveTimer: NodeJS.Timeout | null = null;
 
   constructor(private port: number = 12800) {}
 
@@ -30,6 +31,13 @@ export class WsBridge {
           this.client.close();
         }
         this.client = ws;
+
+        if (this.keepaliveTimer) clearInterval(this.keepaliveTimer);
+        this.keepaliveTimer = setInterval(() => {
+          if (this.client && this.client.readyState === WebSocket.OPEN) {
+            this.client.send(JSON.stringify({ type: "ping" }));
+          }
+        }, 15000);
 
         ws.on("error", () => {
           // Error events lead to close, which is handled below
@@ -60,6 +68,7 @@ export class WsBridge {
         });
         ws.on("close", () => {
           console.error("[WS] 客户端断开");
+          if (this.keepaliveTimer) clearInterval(this.keepaliveTimer);
           this.client = null;
           for (const [id, p] of this.pending) {
             clearTimeout(p.timer);

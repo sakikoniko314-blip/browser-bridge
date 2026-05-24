@@ -294,6 +294,9 @@ async function handleToolCall(
         return { content: [{ type: "text", text: String(data) }] };
       }
       case "browser_execute_js": {
+        if (typeof data === "string" && data === "__CSP_BLOCKED__") {
+          return { content: [{ type: "text", text: "此网站的安全策略(CSP)禁止执行 JS，请用 get_text / get_html 替代" }], isError: true };
+        }
         return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
       }
       case "browser_screenshot": {

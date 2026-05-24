@@ -27,12 +27,16 @@
 
 ### 第一步：下载代码
 
+打开终端（PowerShell 或 CMD），运行：
+
 ```bash
 git clone https://github.com/sakikoniko314-blip/browser-bridge.git
 cd browser-bridge
 ```
 
 ### 第二步：安装依赖
+
+在上面的终端里继续（确保还在 `browser-bridge` 目录）：
 
 ```bash
 npm install

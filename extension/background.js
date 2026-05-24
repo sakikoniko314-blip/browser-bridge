@@ -236,12 +236,13 @@ async function executeTool(tool, args) {
           chrome.debugger.attach({ tabId: tab.id }, '1.3', function() {
             if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
             if (info.isSubmit && info.in) {
-              chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchMouseEvent', { type: 'mousePressed', x: info.ix, y: info.iy, modifiers: 0, button: 'left', clickCount: 1 }, function() {
-                chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchMouseEvent', { type: 'mouseReleased', x: info.ix, y: info.iy, modifiers: 0, button: 'left', clickCount: 1 }, function() {
-                  chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchKeyEvent', { type: 'rawKeyDown', modifiers: 0, windowsVirtualKeyCode: 13, key: 'Enter', code: 'Enter' }, function() {
-                    chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchKeyEvent', { type: 'char', modifiers: 0, windowsVirtualKeyCode: 13, key: 'Enter', text: '\r', unmodifiedText: '\r' }, function() {
-                      chrome.debugger.detach({ tabId: tab.id }, resolve);
-                    });
+              chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchKeyEvent', { type: 'rawKeyDown', modifiers: 0, windowsVirtualKeyCode: 13, key: 'Enter', code: 'Enter' }, function() {
+                chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchKeyEvent', { type: 'char', modifiers: 0, windowsVirtualKeyCode: 13, key: 'Enter', text: '\r', unmodifiedText: '\r' }, function() {
+                  chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchKeyEvent', { type: 'keyUp', modifiers: 0, windowsVirtualKeyCode: 13, key: 'Enter', code: 'Enter' }, function() {
+                    chrome.debugger.detach({ tabId: tab.id }, resolve);
+                  });
+                });
+              });
                   });
                 });
               });

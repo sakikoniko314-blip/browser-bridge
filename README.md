@@ -1,73 +1,115 @@
 # Browser Bridge
 
-**让 AI 控制你真实的 Chrome 浏览器——完整 DOM、JS 注入、Cookie、截图。不走云端，不上传数据。**
+**让 AI 控制你的浏览器——真·全知全能。**
 
-```
-opencode → MCP Server → Chrome 扩展 → 你真实的浏览器
-```
+市面上所有的"AI 浏览器"方案都有致命短板：BrowserMCP 只能读网页的文字快照，看不到 HTML 源码；Playwright MCP 需要新开窗口，没有你的登录态。**Browser Bridge 直接用你正在使用的 Chrome**——你的登录、Cookie、标签页全都在，AI 还能在页面里执行任意 JavaScript。
 
-## 为什么重复造轮子
+## 它能干什么
+
+拿实际场景举例：
+
+- "帮我上 B站给某人发私信" → AI 打开 B站、找到用户、填内容、点发送，全程自动化
+- "帮我在 GitHub 创建一个仓库" → AI 打开页面、填表、提交
+- "帮我查这个网页上所有 API 请求" → `execute_js` 直接调 `performance.getEntries()`
+- "把这个页面截图发给同事" → 截图存到本地文件，直接拖进聊天框
+
+## 和同类产品的区别
 
 | | Browser Bridge | BrowserMCP | Playwright MCP |
 |---|---|---|---|
-| 用你真实的 Chrome | ✅ | ✅ | ❌ 新窗口/headless |
-| 完整 HTML 源码 | ✅ 650KB B站首页 | ❌ 只给 accessibility tree | ✅ |
-| 任意 JS 执行 | ✅ `<script>` 注入 | ❌ | ✅ inject |
-| 免登录 | ✅ 天然带 Cookie | ✅ | ❌ 需手动登录 |
-| Cookie 读写 | ✅ | ✅ | 需要配置 |
-| CSP 页面可用 | ✅ DOM 注入绕过 | N/A | 无限制 |
-| 数据隐私 | ✅ 纯本地 | ❌ 走 Agent360 云 | ✅ 本地 |
+| 用你真实的 Chrome | ✅ | ✅ | ❌ |
+| 能看 HTML 源码 | ✅ 完整 DOM | ❌ 只给文字描述 | ✅ |
+| 能在页面里跑 JS | ✅ `<script>` 注入 | ❌ | ✅ |
+| 自动带登录态 | ✅ Cookie 都在 | ✅ | ❌ 要重新登录 |
+| 数据去哪了 | 你自己的电脑 | Agent360 云端 | 本地或无头 |
 
-## 16 个 MCP 工具
+## 新手安装（5 分钟）
 
-| 分类 | 工具 |
-|---|---|
-| 🧭 导航 | `browser_navigate`, `browser_switch_tab` |
-| 📄 DOM | `browser_get_html`, `browser_get_text` |
-| ⚡ JS | `browser_execute_js` ✨ |
-| 🖱️ 交互 | `browser_click`, `browser_type_text`, `browser_press_key`, `browser_scroll` |
-| ⏳ 等待 | `browser_wait_for_selector` |
-| 🗂️ 标签 | `browser_list_tabs`, `browser_close_tab` |
-| 🍪 存储 | `browser_get_cookies`, `browser_set_cookie`, `browser_get_storage` |
-| 📸 截图 | `browser_screenshot`（存本地文件） |
-
-## 安装
+### 第一步：下载代码
 
 ```bash
-git clone https://github.com/{你的用户名}/browser-bridge.git
+git clone https://github.com/sakikoniko314-blip/browser-bridge.git
 cd browser-bridge
+```
+
+### 第二步：安装依赖
+
+```bash
 npm install
 npm run build
+```
+
+### 第三步：一键配置
+
+```bash
 node setup.mjs
 ```
 
-然后 `chrome://extensions/` → 开发者模式 → 加载已解压 → 选 `extension/` 目录。
+运行后会提示你：
+1. 打开 `chrome://extensions/`
+2. 右上角打开"开发者模式"
+3. 点"加载已解压的扩展程序"
+4. 选择 `browser-bridge/extension/` 文件夹
+5. 记下扩展的 ID（一串字母），填回终端
 
-opencode 配置里加一行：
+### 第四步：连接
+
+1. Chrome 右上角点扩展图标（拼图）→ 找到 Browser Bridge → 点图钉固定
+2. 点扩展图标 → 点 **Connect** → 看到绿色圆点和 "Connected"
+3. 搞定！
+
+### 第五步：配置 opencode
+
+打开 `C:\Users\你的用户名\.config\opencode\opencode.json`，找到 `mcp` 部分，加上：
 
 ```json
 "browser-bridge": {
   "type": "local",
-  "command": ["node", "D:\\path\\to\\browser-bridge\\bridge.mjs"],
+  "command": ["node", "你的路径\\browser-bridge\\bridge.mjs"],
   "enabled": true
 }
 ```
 
-## 架构
+注意把 `你的路径` 换成实际路径，比如 `D:\\workspace\\browser-bridge\\bridge.mjs`。
 
-```
-Chrome 扩展 (MV3) ← WebSocket → MCP Server ← MCP 协议 → opencode
-       ↓
-  Native Host → 自动启停 MCP Server
-```
+### 第六步：重启 opencode
 
-- **扩展**：16 个工具的实际执行者，通过 Chrome API 操控浏览器
-- **MCP Server**：接收 opencode 指令，转发给扩展
-- **Bridge**：opencode stdio ↔ WebSocket 双向转发
-- **Native Host**：扩展一键启动/停止 MCP Server
+关掉重开。然后就能用了。在 opencode 里直接说"帮我打开 B站"就行。
 
-## 与同类方案的核心差异
+## 工具速查
 
-1. **BrowserMCP** 只返回 accessibility tree（几十 KB 的文本快照），拿不到 HTML。曾经用它读 B站视频列表，根本找不到 dom 元素。
-2. **Playwright MCP** 能拿 HTML，但要新开窗口，没有登录态，每次都要重新登录。
-3. **Browser Bridge** 直接用你正在用的 Chrome——所有 cookie、localStorage、登录态都在。还能通过 `<script>` 注入在页面里直接执行 JS，操作 Vue/React 的状态。
+| 想做什么 | 用什么工具 |
+|---|---|
+| 打开一个网址 | `browser_navigate` |
+| 看页面文字内容 | `browser_get_text` |
+| 看页面 HTML 源码 | `browser_get_html` |
+| 在页面里执行 JS | `browser_execute_js` |
+| 点击一个按钮 | `browser_click` |
+| 输入文字 | `browser_type_text` |
+| 按键盘（回车、Esc）| `browser_press_key` |
+| 滚动页面 | `browser_scroll` |
+| 截图 | `browser_screenshot` |
+| 等待某个元素出现 | `browser_wait_for_selector` |
+| 切换标签页 | `browser_switch_tab` |
+| 关闭标签页 | `browser_close_tab` |
+| 查看所有标签页 | `browser_list_tabs` |
+| 获取/设置 Cookie | `browser_get_cookies`、`browser_set_cookie` |
+| 读取 localStorage | `browser_get_storage` |
+
+## 常见问题
+
+**Q: 为什么扩展过一会就断了？**
+
+Chrome 会在 30 秒不操作后自动关掉扩展。点一下扩展图标重新 Connect 就行。放心，不会丢失配置。
+
+**Q: execute_js 返回 null？**
+
+有些网站（如 GitHub、Bing）有严格的安全策略，禁止注入 JS。这是网站的自我保护。对于这些网站可以用 `get_html` + `get_text` 代替。
+
+**Q: 安全吗？**
+
+所有通信都在你本机完成——openCode → MCP Server → Chrome 扩展 → 你的浏览器。没有任何数据上传到云端。扩展也不会上传你的浏览记录或密码。
+
+## 技术支持
+
+有问题提 [Issues](https://github.com/sakikoniko314-blip/browser-bridge/issues)。

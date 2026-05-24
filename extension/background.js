@@ -223,22 +223,29 @@ async function executeTool(tool, args) {
       var rect = await executeInPage(function(sel) {
         var el = document.querySelector(sel);
         if (!el) return null;
+        el.scrollIntoView({ block: 'center' });
         var r = el.getBoundingClientRect();
-        return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2), w: r.width, h: r.height, text: el.textContent?.trim()?.substring(0, 50) };
+        return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2), w: r.width, h: r.height };
       }, [args.selector]);
       if (!rect) return 'NOT_FOUND';
       try {
         await new Promise(function(resolve, reject) {
           chrome.debugger.attach({ tabId: tab.id }, '1.3', function() {
-            if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
+            if (chrome.runtime.lastError) {
+              console.error('debugger attach failed:', chrome.runtime.lastError.message);
+              return reject(new Error(chrome.runtime.lastError.message));
+            }
             chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchMouseEvent', { type: 'mousePressed', x: rect.x, y: rect.y, modifiers: 0, button: 'left', clickCount: 1, buttons: 1 }, function() {
+              if (chrome.runtime.lastError) console.error('CDP mousePressed error:', chrome.runtime.lastError.message);
               chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchMouseEvent', { type: 'mouseReleased', x: rect.x, y: rect.y, modifiers: 0, button: 'left', clickCount: 1, buttons: 1 }, function() {
+                if (chrome.runtime.lastError) console.error('CDP mouseReleased error:', chrome.runtime.lastError.message);
                 chrome.debugger.detach({ tabId: tab.id }, resolve);
               });
             });
           });
         });
       } catch(e) {
+        console.error('CDP click failed, fallback to dispatchEvent:', e.message);
         return await executeInPage(function(sel) {
           var el = document.querySelector(sel);
           if (!el) return 'NOT_FOUND';

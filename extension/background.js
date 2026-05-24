@@ -220,29 +220,38 @@ async function executeTool(tool, args) {
 
     case 'browser_click': {
       var tab = await getActiveTab();
-      var rect = await executeInPage(function(sel) {
+      var info = await executeInPage(function(sel) {
         var el = document.querySelector(sel);
         if (!el) return null;
         el.scrollIntoView({ block: 'center' });
         var r = el.getBoundingClientRect();
-        return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2), tag: el.tagName, type: el.type || '' };
+        var formInput = el.tagName === 'INPUT' ? el : el.closest('form')?.querySelector('input:not([type="hidden"])');
+        if (formInput) formInput.scrollIntoView({ block: 'center' });
+        var fi = formInput ? formInput.getBoundingClientRect() : null;
+        return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2), isSubmit: !!el.closest('form') || el.matches('[type="submit"],button[type="submit"]'), ix: fi ? Math.round(fi.x + fi.width / 2) : 0, iy: fi ? Math.round(fi.y + fi.height / 2) : 0, in: !!formInput };
       }, [args.selector]);
-      if (!rect) return 'NOT_FOUND';
+      if (!info) return 'NOT_FOUND';
       try {
         await new Promise(function(resolve, reject) {
-          var timeout = setTimeout(function() { reject(new Error('timeout')); }, 3000);
           chrome.debugger.attach({ tabId: tab.id }, '1.3', function() {
-            clearTimeout(timeout);
-            if (chrome.runtime.lastError) { clearTimeout(timeout); return reject(new Error(chrome.runtime.lastError.message)); }
-            chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchMouseEvent', { type: 'mousePressed', x: rect.x, y: rect.y, modifiers: 0, button: 'left', clickCount: 1 }, function() {
-              chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchMouseEvent', { type: 'mouseReleased', x: rect.x, y: rect.y, modifiers: 0, button: 'left', clickCount: 1 }, function() {
-                chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchKeyEvent', { type: 'keyDown', modifiers: 0, windowsVirtualKeyCode: 13, key: 'Enter', code: 'Enter', text: '\r' }, function() {
-                  chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchKeyEvent', { type: 'keyUp', modifiers: 0, windowsVirtualKeyCode: 13, key: 'Enter', code: 'Enter' }, function() {
-                    chrome.debugger.detach({ tabId: tab.id }, resolve);
+            if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
+            if (info.isSubmit && info.in) {
+              chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchMouseEvent', { type: 'mousePressed', x: info.ix, y: info.iy, modifiers: 0, button: 'left', clickCount: 1 }, function() {
+                chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchMouseEvent', { type: 'mouseReleased', x: info.ix, y: info.iy, modifiers: 0, button: 'left', clickCount: 1 }, function() {
+                  chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchKeyEvent', { type: 'rawKeyDown', modifiers: 0, windowsVirtualKeyCode: 13, key: 'Enter', code: 'Enter' }, function() {
+                    chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchKeyEvent', { type: 'keyUp', modifiers: 0, windowsVirtualKeyCode: 13, key: 'Enter', code: 'Enter' }, function() {
+                      chrome.debugger.detach({ tabId: tab.id }, resolve);
+                    });
                   });
                 });
               });
-            });
+            } else {
+              chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchMouseEvent', { type: 'mousePressed', x: info.x, y: info.y, modifiers: 0, button: 'left', clickCount: 1 }, function() {
+                chrome.debugger.sendCommand({ tabId: tab.id }, 'Input.dispatchMouseEvent', { type: 'mouseReleased', x: info.x, y: info.y, modifiers: 0, button: 'left', clickCount: 1 }, function() {
+                  chrome.debugger.detach({ tabId: tab.id }, resolve);
+                });
+              });
+            }
           });
         });
       } catch(e) {
@@ -251,8 +260,6 @@ async function executeTool(tool, args) {
           var el = document.querySelector(sel);
           if (!el) return 'NOT_FOUND';
           if (el instanceof HTMLElement) el.focus();
-          el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
-          el.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true, cancelable: true }));
           el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
           return document.documentElement.outerHTML;
         }, [args.selector]);

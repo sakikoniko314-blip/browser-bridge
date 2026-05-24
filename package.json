@@ -1,6 +1,6 @@
 {
   "name": "@sakiko111/browser-bridge",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Chrome MCP Server — AI controls your real browser with full HTML/CSS/JS access",
   "type": "module",
   "main": "dist/index.js",
@@ -30,6 +30,12 @@
     "@types/ws": "^8.5.0",
     "typescript": "^5.7.0"
   },
-  "keywords": ["mcp", "chrome-extension", "browser-automation", "opencode", "claude"],
+  "keywords": [
+    "mcp",
+    "chrome-extension",
+    "browser-automation",
+    "opencode",
+    "claude"
+  ],
   "license": "MIT"
 }

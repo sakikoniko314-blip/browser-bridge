@@ -102,13 +102,9 @@ node setup.mjs
 
 ## 常见问题
 
-**Q: 为什么扩展过一会就断了？**
-
-Chrome 会在 30 秒不操作后自动关掉扩展。点一下扩展图标重新 Connect 就行。放心，不会丢失配置。
-
 **Q: execute_js 返回 null？**
 
-有些网站（如 GitHub、Bing）有严格的安全策略，禁止注入 JS。这是网站的自我保护。对于这些网站可以用 `get_html` + `get_text` 代替。
+有些网站（如 GitHub、Bing）有严格的安全策略，禁止注入 JS。这是网站的自我保护。现在会直接提示"CSP 禁止执行 JS"，建议用 `get_html` / `get_text` 代替。
 
 **Q: 安全吗？**
 

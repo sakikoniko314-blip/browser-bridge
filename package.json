@@ -1,11 +1,11 @@
 {
-  "name": "browser-bridge",
+  "name": "@sakiko111/browser-bridge",
   "version": "1.0.0",
   "description": "Chrome MCP Server — AI controls your real browser with full HTML/CSS/JS access",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "browser-bridge": "./setup.mjs"
+    "browser-bridge": "./cli.mjs"
   },
   "scripts": {
     "build": "tsc",

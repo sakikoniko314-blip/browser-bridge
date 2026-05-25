@@ -411,6 +411,12 @@ async function executeTool(tool, args) {
       }, [args.selector]);
     }
 
+    case 'browser_wait_for_navigation': {
+      return await executeInPage(() => {
+        return JSON.stringify(document.readyState === 'complete');
+      });
+    }
+
     case 'browser_screenshot': {
       const tab = await getActiveTab();
       const format = args.format || 'png';

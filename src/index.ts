@@ -232,6 +232,16 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         required: ["selector"],
       },
     },
+    {
+      name: "browser_wait_for_navigation",
+      description: "等待当前页面加载完成（导航后调用）。检测 document.readyState === 'complete'",
+      inputSchema: {
+        type: "object",
+        properties: {
+          timeout: { type: "number", description: "超时毫秒数，默认 15000" },
+        },
+      },
+    },
   ],
 }));
 
@@ -259,6 +269,19 @@ async function handleToolCall(
           return { content: [{ type: "text", text: "true" }] };
         }
         await new Promise(r => setTimeout(r, 200));
+      }
+      return { content: [{ type: "text", text: "false" }] };
+    }
+
+    if (name === "browser_wait_for_navigation") {
+      const timeout = (args.timeout as number) || 15000;
+      const start = Date.now();
+      while (Date.now() - start < timeout) {
+        const r = await bridge.sendCommand("browser_wait_for_navigation", {});
+        if (r.success && String(r.data) === '"true"') {
+          return { content: [{ type: "text", text: "true" }] };
+        }
+        await new Promise(r => setTimeout(r, 500));
       }
       return { content: [{ type: "text", text: "false" }] };
     }
@@ -303,6 +326,13 @@ async function handleToolCall(
         const hex = Array.from(crypto.getRandomValues(new Uint8Array(4)), b => b.toString(16).padStart(2, "0")).join("");
         const filepath = path.join(tmpdir(), `screenshot-${hex}.png`);
         fs.writeFileSync(filepath, Buffer.from(String(data).split(",")[1], "base64"));
+        try {
+          const now = Date.now();
+          for (const f of fs.readdirSync(tmpdir()).filter(f => f.startsWith("screenshot-") && f.endsWith(".png"))) {
+            const fp = path.join(tmpdir(), f);
+            if (now - fs.statSync(fp).mtimeMs > 3600000) fs.unlinkSync(fp);
+          }
+        } catch {}
         return { content: [{ type: "text", text: filepath }] };
       }
       case "browser_list_tabs": {

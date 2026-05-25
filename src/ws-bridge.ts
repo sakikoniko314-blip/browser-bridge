@@ -91,7 +91,7 @@ export class WsBridge {
   ): Promise<CommandResult> {
     if (!this.connected) {
       console.error(`[WS] sendCommand: 扩展未连接`);
-      return { success: false, error: "扩展未连接。请先打开 Chrome 扩展并点击连接。" };
+      return { success: false, error: "浏览器扩展未连接。请点击 Chrome 右上角扩展图标 → Browser Bridge → Connect。如果按钮不响应，刷新 chrome://extensions/ 页面。" };
     }
     const id = crypto.randomUUID();
     const request: WsRequest = { type: "request", id, tool, args };

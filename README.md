@@ -137,7 +137,7 @@ node setup.mjs
 1. Chrome 右上角扩展图标 → 固定 Browser Bridge
 2. 点 **Connect** → 绿色圆点 Connected
 
-### 第五步：配置 opocode
+### 第五步：配置 opencode
 
 `C:\Users\你的用户名\.config\opencode\opencode.json`:
 
